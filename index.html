@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Script-Type" content="text/javascript">
+    <meta http-equiv="Content-Style-Type" content="text/css">
+    <meta name="author" content="Jaroslav 'Rajmund' Hutař">
+    <link rel="stylesheet" type="text/css" href="./js/style.css">
+    <link type="text/css" href="./js/jquery-ui.css" rel="stylesheet"/>
+    <script type="text/javascript" src="./js/jquery.min.js"></script>
+    <script type="text/javascript" src="./js/jquery-ui.min.js"></script>
+    <title>Odkrývačka</title>
+</head>
+<body>
+<script type="text/javascript">
+	$(document).ready(function () {
+		$("#napoveda").dialog().dialog("close");
+	});
+
+	var vel = prompt("Zadej velikost čtverečku (30 - 200)\nPokud zadáš: 'napoveda' zobrazí se nápověda", "75");
+	var obrazek = 1;
+	var pismeno = new Array("", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z");
+	var scrW = screen.width - (screen.width % vel);
+	var scrH = screen.height - (screen.height % vel);
+	var G_LAST_SQUARE = Array();
+
+	if (vel == "napoveda" || vel == "'napoveda'" || vel == "nápověda") {
+		$(document).ready(function () {
+			$("#napoveda").dialog("open");
+			$("#napoveda").dialog({
+				beforeClose: function (event, ui) {
+					window.location = "./index.html";
+				}
+			});
+		});
+	}
+	else if (vel >= 30 && vel <= 200) {
+		$(document).ready(function () {
+			$("#over").width(screen.width);
+			$("#over").height(screen.height);
+			$("#over").fadeOut(10);
+			show_new_img("obrazek" + obrazek + ".jpg");
+			$(document).keydown(function (e) {
+				if (e.keyCode == 39) { //PRAVA
+					obrazek++;
+					show_new_img("obrazek" + obrazek + ".jpg");
+					return false;
+				}
+				else if (e.keyCode == 13) { //ENTER
+					if (confirm("Opravdu odkyrýt vše?", "nadpis")) {
+						$("TD").removeClass("prazdny");
+						$("TD").addClass("pruhledny");
+						$("TD").removeClass("hover");
+						return false;
+					}
+				}
+				else if (e.keyCode == 32) { //MEZERNÍK
+					$('#current-image').text('Aktuální obrázek: ' + obrazek);
+					$('#napoveda').dialog({
+						buttons: {
+							OK: function () {
+								$(this).dialog("close");
+							}
+						}
+					});
+					return false;
+				}
+				else if (e.keyCode == 77) { //PÍSMENO M
+					var num = prompt("Zadej číslo obrázku na který chceš přejít", obrazek);
+					if (num) {
+						show_new_img("obrazek" + num + ".jpg");
+						return false;
+					}
+				}
+
+			});
+		});
+	}
+	else {
+		alert("Rozsah velikostí musí být mezi 30 a 200.");
+		window.location = "./index.html";
+	}
+
+
+	function show_new_img(new_img) {
+		$('#over').fadeIn(1000, function () {
+			var newW;
+			var newH;
+
+			var img = new Image();
+			img.src = './obrazky/' + new_img;
+			img.onload = function () {
+				var imgW = this.width;
+				var imgH = this.height;
+				if (scrW / imgW * imgH > scrH) {
+					newW = Math.round((scrH / imgH) * imgW);
+					newH = scrH;
+					$("#main_img").height(scrH);
+					$("#main_img").width(newW);
+					$("#main_img").offset({top: 0, left: ((screen.width - newW) / 2)});
+				}
+				else {
+					newW = scrW;
+					newH = Math.round(scrW / imgW * imgH);
+					$("#main_img").height(newH);
+					$("#main_img").width(scrW);
+					$("#main_img").offset({top: 0, left: ((screen.width - newW) / 2)});
+				}
+				$("#main_img").attr("src", img.src);
+
+				var new_table = "<TABLE id=\"tabulka\" class=\"tabulka\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"left:" + ((screen.width - newW) / 2) + "px;width:" + newW + "px;height:" + newH + "px;\">";
+				for (var rad = 0; rad < Math.floor(newH / vel); rad++) {
+					new_table += "<TR style=\"height:" + vel + "px;\">"
+					for (var slo = 0; slo <= Math.floor(newW / vel); slo++) {
+						var text = "";
+						if (rad == 0 && slo == 0)
+							text = "1A";
+						else if (rad == 0 && slo != 0)
+							text = pismeno[Math.floor(slo / 26)] + pismeno[(slo % 26) + 1];
+						else if (rad != 0 && slo == 0)
+							text = (rad + 1);
+						else
+							text = "<IMG src=\"./js/pruhledny.png\">";
+						new_table += "<TD class=\"prazdny\" style=\"width:" + vel + "px;\">" + text + " <\/TD>";
+					}
+					new_table += "<\/TR>";
+				}
+				new_table += "<\/TABLE>";
+
+				$("#tabulka").replaceWith(new_table);
+			}
+		});// end fadeTo()
+
+		$("#over").fadeOut(1000, function () {
+			$("TD").click(function (e) {
+				if ($(this).hasClass("prazdny")) {
+					if ((Math.abs(G_LAST_SQUARE["x"] - $(this).index()) >= 2) || (Math.abs(G_LAST_SQUARE["y"] - $(this).parent("tr").index()) >= 2)) {
+						$(this).removeClass("prazdny");
+						$(this).removeClass("hover");
+						$(this).addClass("pruhledny");
+						G_LAST_SQUARE["x"] = $(this).index();
+						G_LAST_SQUARE["y"] = $(this).parent("tr").index();
+					}
+				}
+			});
+
+			$("td").hover(
+				function () {
+					if ($(this).hasClass("prazdny"))
+						$(this).addClass("hover");
+				},
+				function () {
+					$(this).removeClass("hover");
+				}
+			);
+		});
+
+		G_LAST_SQUARE["x"] = 1000;
+		G_LAST_SQUARE["y"] = 1000;
+	}
+	;//end show_new_img
+
+
+</script>
+
+<IMG src="./js/pruhledny.png" id="main_img" alt="odkryvacka">
+<TABLE id="tabulka">
+    <tr>
+        <td></td>
+    </tr>
+</TABLE>
+<DIV id="over" class="over"></DIV>
+<div id='napoveda'>
+    <div style='font-size:18pt'>Odkrývačka</div>
+
+    <div style="font-weight:bold;" id="current-image">Aktuální obrázek: 0</div>
+
+    <div style='font-weight:bold;'>Ovládání</div>
+    Aplikace se ovládá pomocí klávesnice.<br/>
+    <span style='text-decoration:underline;'>Šipka vpravo</span> - následující fotografie<br/>
+    <span style='text-decoration:underline;'>Enter</span> - odkryje celý obrázek.<br/>
+    <span style='text-decoration:underline;'>M</span> - vyvolá nabídku pro výběr obrázku.<br/>
+    <span style='text-decoration:underline;'>Mezerník</span> - zobrazí informace.<br/>
+
+    <div style='font-weight:bold;'>Příprava hry</div>
+    Do složky obrázky nahraj očíslované obrázky ve formátu obrazekXX.jpg, kde XX označuje postupně se zvyšující číslice
+    (1,2,3,...).<br/>
+    Po spuštění aplikace zadej velikost políček. Velikost se zadává v pixelech a políčka jsou čtvercová.<br/>
+    Obrázek se zvětšuje v poměru rozměrů na celou obrazovku, doporučuji tedy použít celoobrázkový režim (klávesa
+    F11).<br/>
+
+    <div style='font-weight:bold;'>Pravidla</div>
+    Pomocí myši odkrýváš jednotlivá políčka, ale nemůžeš vybrat žádné z osmi sousedních políček posledního vybraného
+    políčka.<br/>
+
+</div>
+</body>
+</html>
