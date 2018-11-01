@@ -1,4 +1,4 @@
-# Odkrývačka
+# Uncovered
 
 ### Pravidla:
 Pomocí myši odkrýváš jednotlivá políčka, ale nemůžeš vybrat žádné z osmi sousedních políček posledního vybraného políčka.
@@ -13,4 +13,3 @@ Po spuštění aplikace zadej velikost políček. Velikost se zadává v pixelec
 Obrázek se zvětšuje v poměru rozměrů na celou obrazovku, doporučuji tedy použít **celoobrázkový režim** (klávesa `F11`).
 
 ![Náhled](./js/images/odkryvacka_cover.png)
-
